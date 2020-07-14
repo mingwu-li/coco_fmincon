@@ -8,13 +8,8 @@ cocoinstall = fullfile(maindir, extdir , 'coco','startup.m');
 run(cocoinstall);
 
 addpath(fullfile(maindir, 'external', 'dae', 'toolbox'));
-
 addpath(fullfile(maindir, 'toolbox'));
 
-% 
-% addpath(fullfile(maindir, 'src','multiindex'));
-% 
-% addpath(fullfile(maindir, 'src', 'frc'));
 end
 
 
