@@ -1,10 +1,14 @@
-
-
-% moon lander optimal control problem
+%% Moon lander optimal control problem
+% 
 % minimize \int_0^tf u(t)dt
 % s.t.     \dot{x}_1 = x_2, \dot{x}_2 = -1.5 + u(t), 0<=u(t)<=3
-%          x_1(0) = 10, x_2(0)=2, x_1(tf)=0, x_2(tf)=0
-% Here tf is free
+%          x_1(0) = 10, x_2(0)=-2, x_1(tf)=0, x_2(tf)=0
+% Here tf is free to vary.
+%
+% More details and the analytical solution to this problem can be found at
+% Darby, C. L., Hager, W. W., & Rao, A. V. (2011). An hp?adaptive 
+% pseudospectral method for solving optimal control problems. Optimal 
+% Control Applications and Methods, 32(4), 476-502.
 
 %% construct initial solution with free tf and u = k*t
 t0 = 0;
@@ -47,6 +51,7 @@ t0   = sol.tbp;
 x0   = sol.xbp;
 y0   = sol.p*sol.tbp;
 prob = coco_prob();
+prob = coco_set(prob, 'ddaecoll', 'NTST', 20);
 prob = coco_set(prob,'ddaecoll','Apoints','Gauss');
 prob = ddaecoll_isol2seg(prob, '', @lander, t0, x0, y0, []); 
 prob = alg_dae_isol2seg(prob, 'g1', '', @g1func, 'inequality'); % u>=0
@@ -71,36 +76,16 @@ u0 = prob.efunc.x0;
 fprintf('Optimization algorithm: interior-point (default)\n');
 x = fmincon(@(u) objfunc(u,prob,'obj'), u0,[],[],[],[],[],[],@(u) nonlincons(u,prob),options);
 
-xx = x(data.xbp_idx);
-xx = reshape(xx, data.xbp_shp);
-yy = x(data.ybp_idx);
-T0 = x(data.T0_idx);
-T  = x(data.T_idx);
-tbpd = T0+T*data.tbpd;
-tbpa = T0+T*data.tbpa;
-
+sol = opt_read_ddaecoll_sol(x, prob, '');
 figure(1)
-plot(tbpd, xx(1,:)); hold on
-plot(tbpd, xx(2,:));
+plot(sol.tbpd, sol.xbp(:,1), 'r-'); hold on
+plot(sol.tbpd, sol.xbp(:,2), 'b--');
+xlabel('$t$', 'interpreter', 'latex');
+legend('$x_1(t)$', '$x_2(t)$', 'interpreter', 'latex');
+set(gca, 'Fontsize', 14);
 
 figure(2)
-plot(tbpa, yy);
-
-% opt_algorithm = {'sqp', 'sqp-legacy', 'active-set', 'trust-region-reflective'};
-% for i = 1:numel(opt_algorithm)
-%     options = optimoptions('fmincon','Display','iter','Algorithm',opt_algorithm{i}); 
-%     options.SpecifyObjectiveGradient  = true;
-%     options.SpecifyConstraintGradient = true;
-%     fprintf('Optimization algorithm: %s\n', opt_algorithm{i});
-%     x = fmincon(@(u) objfunc(u,prob1,'obj'), u0,[],[],[],[],[],[],@(u) nonlincons(u,prob1),options);
-% end
-
-
-
-
-
-
-
-
-
-
+plot(sol.tbpa, sol.ybp, 'ro');
+xlabel('$t$', 'interpreter', 'latex');
+ylabel('$u(t)$', 'interpreter', 'latex');
+set(gca, 'Fontsize', 14);

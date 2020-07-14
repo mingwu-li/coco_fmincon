@@ -1,27 +1,28 @@
-%% Stationary points in the harmonically excited linear oscillator
+%% Stationary points in a two-point boundary-value problem from AUTO [1]
 %
 % This demo illustrate the use of the wrapper to searching for a local
-% extreumum in the variable x2(0) along the two-dimensional manifold of
-% periodic solutions to the system of differential equations
+% extreumum in 1/10*(l1^2+l2^2+l3^2)+\int_0^1 (x1(t)-1)^2 dt to a two-point
+% boundary-value problem as follows
 %
-%     x1' = x2, x2' = -x2-k*x1+cos(t+theta)
+%     x1' = x2, x2' = -l1*exp(x1+l2*x1^2+l3*x1^4), x1(0) = x1(1) = 0
 %
 % The optimization problem is first constructed using coco (with coll
 % toolbox) and then solved using fmincon.
-
-% The figure shows the one-dimensional solution manifolds obtained in the
-% first and third stages of continuation.
-
+%
+% [1] Doedel, E., Keller, H. B., & Kernevez, J. P. (1991). Numerical
+% analysis and control of bifurcation problems (II): Bifurcation in
+% infinite dimensions. International Journal of Bifurcation and Chaos,
+% 1(04), 745-772.
 
 %% Construct optimization problem
 % coco construction
 prob = coco_prob();
-% prob = coco_set(prob,'coll','NTST',15);
-% prob = coco_set(prob,'coll','NCOL',4);
+prob = coco_set(prob,'coll','NTST',20);
+prob = coco_set(prob,'coll','NCOL',4);
 
 % collocation approximation of ODEs
 funcs = {@obv, @obv_dx, @obv_dp, @obv_dxdx, @obv_dxdp, @obv_dpdp};
-coll_args = [funcs, {[0; 1], [0 0;0 0], {'l1', 'l2', 'l3'}, [0.0;0.1;0.1]}];
+coll_args = [funcs, {[0; 1.0], [0 0;0 0], {'l1', 'l2', 'l3'}, [0.0;0.1;0.1]}];
 prob = ode_isol2coll(prob, '', coll_args{:});
 % boundary conditions
 [data, uidx] = coco_get_func_data(prob, 'coll', 'data', 'uidx');
@@ -32,10 +33,10 @@ prob = coco_add_func(prob, 'bc', bc_funcs{:}, [], 'zero', ...
 % objective
 data = obj_init_data(data);
 prob = coco_add_func(prob, 'obj', @objhan, @objhan_du, data, ...
-  'inactive', 'obj', 'uidx', uidx, 'remesh', @obj_remesh);
+  'inactive', 'obj', 'uidx', uidx);
 
 
-%% call fmincon
+%% Call fmincon
 % setup fmincon
 options = optimoptions('fmincon','Display','iter');  
 options.SpecifyObjectiveGradient  = true;
@@ -47,8 +48,8 @@ u0 = prob.efunc.x0; % Initial point
 fprintf('Optimization algorithm: interior-point (default)\n');
 x = fmincon(@(u) objfunc(u,prob,'obj'), u0,[],[],[],[],[],[],@(u) nonlincons(u,prob),options);
 
-
-opt_algorithm = {'sqp', 'sqp-legacy', 'active-set', 'trust-region-reflective'};
+% different optimization algorithm
+opt_algorithm = {'sqp', 'sqp-legacy', 'active-set'};
 for i = 1:numel(opt_algorithm)
     options = optimoptions('fmincon','Display','iter','Algorithm',opt_algorithm{i}); 
     options.SpecifyObjectiveGradient  = true;
@@ -57,5 +58,16 @@ for i = 1:numel(opt_algorithm)
     x = fmincon(@(u) objfunc(u,prob,'obj'), u0,[],[],[],[],[],[],@(u) nonlincons(u,prob),options);
 end
 
+%% Post-processing
+[~,yy]   = opt_read_sol(x, prob, 'obj');
+fprintf('Objetive at located optimum: obj=%d\n', yy);
 
+% optimal state trajectory
+coll_sol = opt_read_coll_sol(x, prob, '');
+figure(1);
+plot(coll_sol.tbp, coll_sol.xbp(:,1), 'r-'); hold on
+plot(coll_sol.tbp, coll_sol.xbp(:,2), 'b--');
+xlabel('$t$', 'interpreter', 'latex');
+legend('$x_1(t)$', '$x_2(t)$', 'interpreter', 'latex');
+set(gca, 'Fontsize', 14);
 

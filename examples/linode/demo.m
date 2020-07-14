@@ -9,9 +9,6 @@
 % The optimization problem is first constructed using coco (with coll
 % toolbox) and then solved using fmincon.
 
-% The figure shows the one-dimensional solution manifolds obtained in the
-% first and third stages of continuation.
-
 %% Construct optimization problem
 % Initial trajectory
 [t0, x0]  = ode45(@(t,x) linode(t, x, [0.98; 0.3]), [0 2*pi], ...
@@ -44,7 +41,23 @@ u0 = prob.efunc.x0; % initial point
 x  = fmincon(@(u) objfunc(u,prob,'vel'), u0,[],[],[],[],[],[],@(u) nonlincons(u,prob),options);
 
 %% results visualization
+[~,yy]   = opt_read_sol(x, prob, 'vel');
+fprintf('Objetive at located optimum: obj=%d\n', yy);
 
+% optimal state trajectory
+coll_sol = opt_read_coll_sol(x, prob, '');
+figure(1);
+plot(coll_sol.tbp, coll_sol.xbp(:,1), 'r-'); hold on
+plot(coll_sol.tbp, coll_sol.xbp(:,2), 'b--');
+xlabel('$t$', 'interpreter', 'latex');
+legend('$x_1(t)$', '$x_2(t)$', 'interpreter', 'latex');
+set(gca, 'Fontsize', 14);
+
+figure(2)
+plot(coll_sol.xbp(:,1), coll_sol.xbp(:,2), 'ko-', 'MarkerSize', 8);
+xlabel('$x_1$', 'interpreter', 'latex');
+ylabel('$x_2$', 'interpreter', 'latex');
+set(gca, 'Fontsize', 14);
 
 
 

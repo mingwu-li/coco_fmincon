@@ -1,12 +1,7 @@
-function demo_reference()
+function demo_adjoint()
 clear
 prob = coco_prob();
-% prob = coco_set(prob, 'coll', 'TOL', 1e-1);
-% prob = coco_set(prob,'coll','NTST',15);
-% prob = coco_set(prob,'coll','NCOL',4);
-% prob = coco_set(prob,'cont', 'ItMX', 550);
 prob = coco_set(prob,'cont', 'NAdapt', 5);
-prob = coco_set(prob,'cont', 'ItMX', 150);
 p1 = [-0.1, 3.5];
 p2 = [-0.1, 0.8];
 p3 = [-0.1, 0.6];
@@ -44,10 +39,6 @@ prob1 = coco_add_adjt(prob1, 'obj', @adj_objhan, @adj_objhan_du, data, ...
 
 cont_pars =  {'obj', 'l1', 'd.obj', 'd.coll.T0', 'd.l3', 'd.l2', 'd.l1'};
 coco(prob1, 'obv1', [], 1, cont_pars, {objint,p1});
-% cont_pars =  {'obj', 'l2', 'd.obj', 'd.coll.T0', 'd.l1', 'd.l3', 'd.l2'};
-% coco(prob1, 'obv1', [], 1, cont_pars, {objint,p2});
-% cont_pars =  {'obj', 'l3', 'd.obj', 'd.coll.T0', 'd.l1', 'd.l2', 'd.l3'};
-% coco(prob1, 'obv1', [], 1, cont_pars, {objint,p3});
 
 %% branch switch from fold to grow nontrivial adjoint
 bd1   = coco_bd_read('obv1');
@@ -130,21 +121,6 @@ prob3 = coco_add_adjt(prob3, 'obj', @adj_objhan, @adj_objhan_du, data,...
 prob3 = coco_add_event(prob3, 'opt', 'd.l2', '=', 0);
 cont_pars = {'l2', 'l1', 'obj', 'd.l2', 'd.l3', 'd.coll.T0', 'd.l1'};
 coco(prob3, 'obv3', [], cont_pars, {p2, p1, objint});
-% prob3 = coco_add_event(prob3, 'opt', 'd.l3', '=', 0);
-% cont_pars = {'l3', 'l1', 'obj', 'd.l2', 'd.l3', 'd.coll.T0', 'd.l1'};
-% coco(prob3, 'obv3', [], cont_pars, {p3, p1, objint});
-% prob3 = coco_add_event(prob3, 'opt', 'd.l1', '=', 0);
-% cont_pars = {'l1', 'l2', 'obj', 'd.l1', 'd.l3', 'd.coll.T0', 'd.l2'};
-% coco(prob3, 'obv3', [], cont_pars, {p1, p2, objint});
-% prob3 = coco_add_event(prob3, 'opt', 'd.l3', '=', 0);
-% cont_pars = {'l3', 'l2', 'obj', 'd.l1', 'd.l3', 'd.coll.T0', 'd.l2'};
-% coco(prob3, 'obv3', [], cont_pars, {p3, p2, objint});
-% prob3 = coco_add_event(prob3, 'opt', 'd.l1', '=', 0);
-% cont_pars = {'l1', 'l3', 'obj', 'd.l2', 'd.l1', 'd.coll.T0', 'd.l3'};
-% coco(prob3, 'obv3', [], cont_pars, {p1, p3, objint});
-% prob3 = coco_add_event(prob3, 'opt', 'd.l2', '=', 0);
-% cont_pars = {'l2', 'l3', 'obj', 'd.l2', 'd.l1', 'd.coll.T0', 'd.l3'};
-% coco(prob3, 'obv3', [], cont_pars, {p2, p3, objint});
 
 %% continue to let d.l3=0
 bd3 = coco_bd_read('obv3');
@@ -181,117 +157,18 @@ prob4 = coco_add_adjt(prob4, 'obj', @adj_objhan, @adj_objhan_du, data,...
 prob4 = coco_add_event(prob4, 'opt', 'd.l3', '=', 0);
 cont_pars = {'l3', 'l2', 'l1', 'obj', 'd.l3', 'd.coll.T0', 'd.l1'};
 coco(prob4, 'obv4', [], cont_pars, {p3,p2,p1,objint});
-% prob4 = coco_add_event(prob4, 'opt', 'd.l2', '=', 0);
-% cont_pars = {'l2', 'l3', 'l1', 'obj', 'd.l2', 'd.coll.T0', 'd.l1'};
-% coco(prob4, 'obv4', [], cont_pars, {p2,p3,p1,objint});
-% prob4 = coco_add_event(prob4, 'opt', 'd.l3', '=', 0);
-% cont_pars = {'l3', 'l1', 'l2', 'obj', 'd.l3', 'd.coll.T0', 'd.l2'};
-% coco(prob4, 'obv4', [], cont_pars, {p3,p1,p2,objint});
-% prob4 = coco_add_event(prob4, 'opt', 'd.l1', '=', 0);
-% cont_pars = {'l1', 'l3', 'l2', 'obj', 'd.l1', 'd.coll.T0', 'd.l2'};
-% coco(prob4, 'obv4', [], cont_pars, {p1, p3, p2, objint});
-% prob4 = coco_add_event(prob4, 'opt', 'd.l2', '=', 0);
-% cont_pars = {'l2', 'l1', 'l3', 'obj', 'd.l2', 'd.coll.T0', 'd.l3'};
-% coco(prob4, 'obv4', [], cont_pars, {p2, p1, p3, objint});
-% prob4 = coco_add_event(prob4, 'opt', 'd.l1', '=', 0);
-% cont_pars = {'l1', 'l2', 'l3', 'obj', 'd.l1', 'd.coll.T0', 'd.l3'};
-% coco(prob4, 'obv4', [], cont_pars, {p1, p2, p3, objint});
 
 
 %% plot results
-% --------- %
-figure(2)
-bd = coco_bd_read('obv1');
-l1 = coco_bd_col(bd,'l1');
-l2 = coco_bd_col(bd,'l2');
-l3 = coco_bd_col(bd,'l3');
-obj = coco_bd_col(bd,'obj');
-figure(2)
-plot3(l1,l2,l3,'k-','LineWidth',2); hold on
-idx = coco_bd_idxs(bd, 'BP');
-plot3(l1(idx), l2(idx), l3(idx), 'ro', 'MarkerFaceColor', 'r')
-figure(3)
-plot3(l1,l2,obj,'k-','LineWidth',2); hold on
-plot3(l1(idx), l2(idx), obj(idx), 'ro', 'MarkerFaceColor', 'r')
-idx = coco_bd_idxs(bd, 'EP');
-id  = union(find(abs(obj(idx)-objint(1))<1e-6),find(abs(obj(idx)-objint(2))<1e-6));
-idx = idx(id);
-plot3(l1(idx), l2(idx), obj(idx), 'go', 'MarkerFaceColor', 'g')
-
-
-% bd = coco_bd_read('obv2');
-% l1 = coco_bd_col(bd,'l1');
-% l2 = coco_bd_col(bd,'l2');
-% l3 = coco_bd_col(bd,'l3');
-% obj = coco_bd_col(bd,'obj');
-% figure(2)
-% plot3(l1,l2,l3,'k-','LineWidth',2); hold on
-% idx = coco_bd_idxs(bd, 'opt');
-% plot3(l1(idx), l2(idx), l3(idx), 'bo', 'MarkerFaceColor', 'b')
-% figure(3)
-% plot3(l1,l2,obj,'k-','LineWidth',2); hold on
-% plot3(l1(idx), l2(idx), obj(idx), 'bo', 'MarkerFaceColor', 'b')
-
-    
-bd = coco_bd_read('obv3');
-l1 = coco_bd_col(bd,'l1');
-l2 = coco_bd_col(bd,'l2');
-l3 = coco_bd_col(bd,'l3');
-obj = coco_bd_col(bd,'obj');
-figure(2)
-plot3(l1,l2,l3,'k-','LineWidth',2); hold on
-idx = coco_bd_idxs(bd, 'opt');
-plot3(l1(idx), l2(idx), l3(idx), 'bo', 'MarkerFaceColor', 'b')
-
-figure(3)
-plot3(l1,l2,obj,'k-','LineWidth',2); hold on
-plot3(l1(idx), l2(idx), obj(idx), 'bo', 'MarkerFaceColor', 'b')
-
-idx = coco_bd_idxs(bd, 'EP');
-id1 = union(find(abs(l1(idx)-p1(1))<1e-6),find(abs(l1(idx)-p1(2))<1e-6));
-id2 = union(find(abs(l2(idx)-p2(1))<1e-6),find(abs(l2(idx)-p2(2))<1e-6));
-idx = idx([id1,id2]);
-figure(2)
-plot3(l1(idx), l2(idx), l3(idx), 'go', 'MarkerFaceColor', 'g')
-figure(3)
-plot3(l1(idx), l2(idx), obj(idx), 'go', 'MarkerFaceColor', 'g')
-    
-
-bd = coco_bd_read('obv4');
-l1 = coco_bd_col(bd,'l1');
-l2 = coco_bd_col(bd,'l2');
-l3 = coco_bd_col(bd,'l3');
-obj = coco_bd_col(bd,'obj');
-figure(2)
-plot3(l1,l2,l3,'k-','LineWidth',2); hold on
-idx = coco_bd_idxs(bd, 'opt');
-plot3(l1(idx), l2(idx), l3(idx), 'ko', 'MarkerFaceColor', 'k')
-figure(3)
-plot3(l1,l2,obj,'k-','LineWidth',2); hold on
-plot3(l1(idx), l2(idx), obj(idx), 'ko', 'MarkerFaceColor', 'k')
-
-idx = coco_bd_idxs(bd, 'EP');
-id1 = union(find(abs(l1(idx)-p1(1))<1e-6),find(abs(l1(idx)-p1(2))<1e-6));
-id2 = union(find(abs(l2(idx)-p2(1))<1e-6),find(abs(l2(idx)-p2(2))<1e-6));
-id3 = union(find(abs(l3(idx)-p3(1))<1e-6),find(abs(l3(idx)-p3(2))<1e-6));
-idx = idx([id1,id2,id3]);
-figure(2)
-plot3(l1(idx), l2(idx), l3(idx), 'go', 'MarkerFaceColor', 'g')
-figure(3)
-plot3(l1(idx), l2(idx), obj(idx), 'go', 'MarkerFaceColor', 'g')
-
-
-set(gca,'LineWidth',1.2);
-set(gca,'FontSize',14);
-xlabel('$p_1$','interpreter','latex','FontSize',14);
-ylabel('$p_2$','interpreter','latex','FontSize',14);
-zlabel('$p_3$','interpreter','latex','FontSize',14);
-axis([-0.1 3.5 -0.1 0.8 -0.1 0.6])
-% zlabel('$\mu_{obj}$','interpreter','latex','FontSize',14);
-% axis([-0.1 3.5 -0.1 0.8 0 1.5])
+figure(1)
+bd  = coco_bd_read('obv4');
+lab = coco_bd_labs(bd, 'opt');
+sol = coll_read_solution('', 'obv4', lab);
+plot(sol.tbp, sol.xbp(:,1), 'ro'); hold on
+plot(sol.tbp, sol.xbp(:,2), 'bv');
 grid on 
 box on
-%%
+
 end
 
 function y = obv(x,p)
