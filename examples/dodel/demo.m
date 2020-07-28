@@ -1,10 +1,10 @@
 %% Stationary points in a two-point boundary-value problem from AUTO [1]
 %
 % This demo illustrate the use of the wrapper to searching for a local
-% extreumum in 1/10*(l1^2+l2^2+l3^2)+\int_0^1 (x1(t)-1)^2 dt to a two-point
+% extreumum in 1/10*(p1^2+p2^2+p3^2)+\int_0^1 (x1(t)-1)^2 dt to a two-point
 % boundary-value problem as follows
 %
-%     x1' = x2, x2' = -l1*exp(x1+l2*x1^2+l3*x1^4), x1(0) = x1(1) = 0
+%     x1' = x2, x2' = -p1*exp(x1+p2*x1^2+p3*x1^4), x1(0) = x1(1) = 0
 %
 % The optimization problem is first constructed using coco (with coll
 % toolbox) and then solved using fmincon.
@@ -22,7 +22,7 @@ prob = coco_set(prob,'coll','NCOL',4);
 
 % collocation approximation of ODEs
 funcs = {@obv, @obv_dx, @obv_dp, @obv_dxdx, @obv_dxdp, @obv_dpdp};
-coll_args = [funcs, {[0; 1.0], [0 0;0 0], {'l1', 'l2', 'l3'}, [0.0;0.1;0.1]}];
+coll_args = [funcs, {[0; 1.0], [0 0;0 0], {'p1', 'p2', 'p3'}, [0.0;0.1;0.1]}];
 prob = ode_isol2coll(prob, '', coll_args{:});
 % boundary conditions
 [data, uidx] = coco_get_func_data(prob, 'coll', 'data', 'uidx');

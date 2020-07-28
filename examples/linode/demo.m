@@ -17,14 +17,13 @@
 prob = coco_prob;
 prob = coco_set(prob, 'ode', 'autonomous', false);
 % collocation approximation of ODEs
-coll_args = {@linode, @linode_dx, @linode_dp, @linode_dt, ...
-  @linode_dxdx, @linode_dxdp, @linode_dpdp, @linode_dtdx, ...
-  @linode_dtdp, @linode_dtdt, t0, x0, {'k' 'th'}, [0.98; 0.3]};
+coll_args = {@linode, @linode_dx, @linode_dp, @linode_dt,...
+    t0, x0, {'k' 'th'}, [0.98; 0.3]};
 prob = ode_isol2coll(prob, '', coll_args{:});
 % boundary conditions
 [data, uidx] = coco_get_func_data(prob, 'coll', 'data', 'uidx');
 maps = data.coll_seg.maps;
-bc_funcs = {@linode_bc, @linode_bc_du, @linode_bc_dudu};
+bc_funcs = {@linode_bc, @linode_bc_du};
 prob = coco_add_func(prob, 'po', bc_funcs{:}, [], 'zero', 'uidx', ...
   uidx([maps.x0_idx; maps.x1_idx; maps.T0_idx; maps.T_idx]));
 % optimization objective
