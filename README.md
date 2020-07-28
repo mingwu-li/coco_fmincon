@@ -18,7 +18,7 @@ An optimization problem includes objective function(al), dimensional equality co
 
 Based on these observations, we write wrapper functions for **fmincon**. Given a problem constructed using COCO, all zero/inequality functions are interpreted as equality/inequality constraints, and a monitor function with an identifier is used to define the objective.
 
-A few examples including a bang-bang optimal control problem are included in this repo. More info about the wrapper functions and examples can be found in doc folder.
+A few examples including a bang-bang optimal control problem are included in this repo. More info about the wrapper functions and examples can be found in docs folder.
 
 
 
