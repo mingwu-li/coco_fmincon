@@ -1,0 +1,448 @@
+% Activate the following line by filling in the right side. If for example the name of the root file is Main.tex, write
+% "...root = Main.tex" if the chapter file is in the same directory, and "...root = ../Main.tex" if the chapter is in a subdirectory.
+ 
+%!TEX root =  CORE-Tutorial.tex
+
+\section{Introduction}
+This tutorial presents how to solve constrained optimization of dynamical systems using packages \textsc{coco}~\cite{coco,coco-recipes} and \mcode{fmincon}~\cite{fmincon}. \mcode{fmincon} is a \textsc{matlab} nonlinear programming solver for finding the minimum of \emph{finite-dimensional} constrained optimization problems. However, the constrained optimization of dynamical systems is \emph{infinite-dimensional}, which can be approximated by a finite-dimensional one with discretization. Here, we use toolboxes in \textsc{coco} to perform such discretization.
+
+In an optimization problem of a dynamical system, the state equations are infinite-dimensional constraints, time-dependent system states and control inputs are infinite dimensional design variables, and the optimization objective can be a functional of system states and control inputs. \textsc{coco} includes a \mcode{coll} toolbox, which provides discretization to trajectory segments of autonomous and non-autonomous dynamical systems. The approximation of an integral can be easily implemented with consistent discretization in \textsc{coco}. In this repository~\cite{wrapper}, we also provide a toolbox for differential-algebraic equations (DAEs) to support discretization to trajectory segments in DAE systems.
+
+The rest of this tutorial is organized as follows: we give a brief introduction to \textsc{coco} and \mcode{fmincon} in section~\ref{sec:coco-fmincon}. We then present a few wrapper functions to couple this two packages in section~\ref{sec:wrapper}. Several optimization examples are solved to demonstrate the effectiveness of the wrapper functions. Each example corresponds to fully documented code in the \mcode{coco_fmincon/examples} folder of this repository. We conclude this report with some discussions on future work.
+
+
+\section{A brief introduction to \textsc{coco} and fmincon}
+\label{sec:coco-fmincon}
+\subsection{\textsc{coco}}
+Continuation Core (\textsc{coco}) is a \textsc{matlab}-based open-source package for computational nonlinear analysis of dynamical systems~\cite{coco,coco-recipes}.
+A unique feature of \textsc{coco} is the embedded construction philosophy of nonlinear systems, where a large problem is assembled from small subproblems with weak couplings. This object-oriented construction paradigm enables us to construct a composite problem from building blocks.
+
+\textsc{coco} provides a predefined library for the building blocks. Specifically, it has fully documented toolboxes for the nonlinear analysis of dynamical systems as follows
+\begin{itemize}
+\item \mcode{ep} toolbox for the equilibria of smooth dynamical systems;
+\item \mcode{coll} toolbox for the trajectory segments of autonomous system $\dot{x}(t)=f(x(t),p)$ and non-autonomous system $\dot{x}(t)=f(t,x(t),p)$; and
+\item \mcode{po} toolbox for the periodic orbits of dynamical systems.
+\end{itemize}
+
+
+
+In this repository, we also provide a toolbox for the trajectory segments of DAE systems in the form $\dot{x}(t)=f(t,x(t),y(t),p)$ and $g(t,x(t),y(t),p)=0$, where $x(t)$ and $y(t)$ are referred to as \emph{differential} and \emph{algebraic} variables, respectively. This toolbox can be used in optimal control problems where the control inputs are interpreted as algebraic variables.
+
+
+
+\subsection{fmincon}
+\mcode{fmincon} is a nonlinear programming solver for optimization problems in the following form~\cite{fmincon}
+\begin{equation}
+\min f(x),\, \text{such that}\, 
+\begin{cases}
+c(x)\leq0\\
+ceq(x)=0\\
+A\cdot x\leq b\\
+Aeq\cdot x=b{eq}\\
+lb\leq x\leq ub  
+\end{cases}
+\end{equation}
+where $f(x)$ is a scaler valued function of $x$, $c(x)$ and $ceq(x)$ can be vector valued nonlinear functions of $x$.
+
+A syntax of \mcode{fmincon} is given by \mcode{x = fmincon(fun,x0,A,b,Aeq,beq,lb,ub,nonlcon)}, where
+\begin{itemize}
+\item \mcode{fun}: a function that returns the objective function $f(x)$;
+\item \mcode{x0}: initial point;
+\item \mcode{A,b}: the coefficient matrix and right-hand side vector in linear inequalities $A\cdot x\leq b$;
+\item \mcode{Aeq,beq}: the coefficient matrix and right-hand side vector in linear equalities $Aeq\cdot x= beq$;
+\item \mcode{lb,ub}: the lower and upper bounds of $x$; and
+\item \mcode{nonlcon}: a function that returns two arrays $c(x)$ and $ceq(x)$, which gives \emph{nonlinear} inequality constraints $c(x)\leq0$ and equality constraints $ceq(x)=0$, respectively.
+\end{itemize}
+
+
+\section{Wrapper functions}
+\label{sec:wrapper}
+In \textsc{coco}, linear systems and nonlinear systems are not differentiated. In addition, linear constraints can be regarded as a special type of nonlinear constraints. It follows that the syntax can be reduced to \mcode{x = fmincon(fun,x0,[],[],[],[],[],[],nonlcon)}. We need two wrapper functions that correspond to the objective function \mcode{fun} and constraints \mcode{nonlcon}, respectively.
+
+We present the following two wrapper functions
+\begin{itemize}
+\item \mcode{[y, Dy] =  objfunc(u, prob, objfid)} for \mcode{fun}. The objective function is defined as a monitor function in \mcode{prob} with function identifier \mcode{objfid}. Here \mcode{prob} is a continuation problem structure with a collection of zero functions and monitor functions, and \mcode{u} is a collection of continuation variables. More details about \mcode{prob} and \mcode{u} can be found at~\cite{coco,coco-recipes}.
+\item \mcode{[c, y, Dc, Dy] =  nonlincons(u, prob)} for \mcode{nonlcon}. All \emph{zero} functions in \mcode{prob} will be defined as equality constraints and all \emph{inequality} monitor functions in \mcode{prob} will be defined as inequality constraints.
+\end{itemize}
+
+We also provide a few wrapper functions for data processing and visualization
+\begin{itemize}
+\item \mcode{[x,y] = opt_read_sol(u, prob, fid)}. This function returns the design variables \mcode{x} specific to the function with identifier \mcode{fid}, and the evaluation of this function at such variables.
+\item \mcode{sol = opt_read_coll_sol(u, prob, oid)}. This function returns a trajectory segment corresponds to the collocation object with identifier \mcode{oid}. More details about the \mcode{sol} can be found at the example in section~\ref{sec:linode}. 
+\item \mcode{sol = opt_read_ddaecoll_sol(u, prob, oid)}. This function returns a trajectory segment corresponds to a collocation object for the DAE system with identifier \mcode{oid}. More details about \mcode{sol} can be found at the example in section~\ref{sec:moon}.
+\end{itemize}
+
+
+\section{An algebraic optimization -- \texttt{alg}}
+Consider $\min (x^2+y)$ s.t. $y=1$. One can easily find that the optimal solution is given by $(x,y)=(0,1)$. 
+
+The sequence of \textsc{matlab} commands
+\begin{lstlisting}[language=coco-highlight]
+>> fcn  = @(p,d,u) deal(d, u(2)-1);
+>> obj  = @(p,d,u) deal(d, u(1)^2+u(2));
+\end{lstlisting}
+define the anonymous functions \mcode{fcn} to represent the constraint, and \mcode{obj} to represent the objective.
+For initial point $(x_0,y_0)=(1,2)$, we proceed to append the zero function \mcode{fcn} and monitor function \mcode{obj} to a continuation problem structure \mcode{prob}, as shown in the following sequence of commands
+\begin{lstlisting}[language=coco-highlight]
+>> u0   = [1;2]; % initial point
+>> prob = coco_prob;
+>> prob = coco_add_func(prob, 'constraint', fcn, [], 'zero', 'u0', u0);
+>> prob = coco_add_func(prob, 'obj', obj, [], 'inactive', 'obj', 'uidx', [1;2]);
+\end{lstlisting}
+
+
+Now we can call \mcode{fmincon} with the developed wrapper functions \mcode{objfunc} and \mcode{nonlincons} as follows
+\begin{lstlisting}[language=coco-highlight]
+x  = fmincon(@(u) objfunc(u,prob,'obj'), u0,[],[],[],[],[],[],...
+    @(u) nonlincons(u,prob));
+\end{lstlisting}
+
+
+
+\section{Optimization of periodic orbits  -- \texttt{linode}}
+\label{sec:linode}
+Consider the problem of finding local minimum of the function $(x(t),k,\theta)\mapsto x_2(0)$ along a manifold of periodic solutions of the dynamical system
+\begin{equation}
+\dot{x}_1=x_2,\quad \dot{x}_2=-x_2-kx_1+\cos(t+\theta)
+\end{equation}
+with period $2\pi$. Analytical studies show that minima occur at $k=1$ and $\theta=(2n+1)\pi$ for any integer $n$.
+
+We proceed to implement a continuation problem in \textsc{coco} using the \mcode{coll} toolbox. Specifically, we use \mcode{ode_isol2coll} toolbox constructor to encode the trajectory constraint as follows
+\begin{lstlisting}[language=coco-highlight]
+>> [t0, x0]  = ode45(@(t,x) linode(t, x, [0.98; 0.3]), [0 2*pi], ...
+  [0.276303; 0.960863]); % Initial trajectory
+>> prob = coco_prob;
+>> prob = coco_set(prob, 'ode', 'autonomous', false);
+>> coll_args = {@linode, @linode_dx, @linode_dp, @linode_dt,...
+    t0, x0, {'k' 'th'}, [0.98; 0.3]};
+>> prob = ode_isol2coll(prob, '', coll_args{:});
+\end{lstlisting}
+Here \mcode{linode} denotes the vector field of the linear dynamical system and \mcode{linode_dx}, \mcode{linode_dp} and \mcode{linode_dt} represent the derivatives of the vector field. They are encoded as follows
+\begin{lstlisting}[language=coco-highlight]
+function y = linode(t, x, p)
+
+x1 = x(1,:);
+x2 = x(2,:);
+k  = p(1,:);
+th = p(2,:);
+
+y(1,:) = x2;
+y(2,:) = -x2-k.*x1+cos(t+th);
+
+end
+\end{lstlisting}
+\begin{lstlisting}[language=coco-highlight]
+function J = linode_dx(t, x, p) 
+
+k = p(1,:);
+
+J = zeros(2,2,numel(t));
+J(1,2,:) = 1;
+J(2,1,:) = -k;
+J(2,2,:) = -1;
+
+end
+\end{lstlisting}
+\begin{lstlisting}[language=coco-highlight]
+function J = linode_dp(t, x, p)
+
+x1 = x(1,:);
+th = p(2,:);
+
+J = zeros(2,2,numel(t));
+J(2,1,:) = -x1;
+J(2,2,:) = -sin(t+th);
+
+end
+\end{lstlisting}
+\begin{lstlisting}[language=coco-highlight]
+function J = linode_dt(t, x, p)
+
+th = p(2,:);
+
+J = zeros(2,numel(t));
+J(2,:) = -sin(t+th);
+
+end
+\end{lstlisting}
+
+We proceed to append boundary conditions to obtain periodic solutions of the dynamical system
+\begin{lstlisting}[language=coco-highlight]
+>> [data, uidx] = coco_get_func_data(prob, 'coll', 'data', 'uidx');
+>> maps = data.coll_seg.maps;
+>> bc_funcs = {@linode_bc, @linode_bc_du};
+>> prob = coco_add_func(prob, 'po', bc_funcs{:}, [], 'zero', 'uidx', ...
+  uidx([maps.x0_idx; maps.x1_idx; maps.T0_idx; maps.T_idx]));
+\end{lstlisting}
+Here \mcode{linode_bc} and \mcode{linode_bc_du} are the encodings of the boundary condition and its Jacobian, respectively
+\begin{lstlisting}[language=coco-highlight]
+function [data, y] = linode_bc(prob, data, u) 
+
+x0 = u(1:2);
+x1 = u(3:4);
+T0 = u(5);
+T  = u(6);
+
+y = [x1(1:2)-x0(1:2); T0; T-2*pi];
+
+end
+\end{lstlisting}
+\begin{lstlisting}[language=coco-highlight]
+function [data, J] = linode_bc_du(prob, data, u)
+
+J = [-1 0 1 0 0 0; 0 -1 0 1 0 0; 0 0 0 0 1 0; 0 0 0 0 0 1];
+
+end
+\end{lstlisting}
+As shown in the command below, we further proceed to append a monitor function for the optimization objective
+\begin{lstlisting}[language=coco-highlight]
+>> prob = coco_add_pars(prob, 'vel', uidx(maps.x0_idx(2)), 'v');
+\end{lstlisting}
+
+Now, the construction of continuation problem structure \mcode{prob} is completed and we can call \mcode{fmincon} as follows
+\begin{lstlisting}[language=coco-highlight]
+>> options = optimoptions('fmincon','Display','iter');  % fmincon settings
+>> options.SpecifyObjectiveGradient  = true;
+>> options.SpecifyConstraintGradient = true;
+
+>> u0 = prob.efunc.x0; % initial point
+>> x  = fmincon(@(u) objfunc(u,prob,'vel'), u0,[],[],[],[],[],[],...
+	@(u)nonlincons(u,prob),options);
+\end{lstlisting}
+Here \mcode{options} gives optimization settings for \mcode{fmincon}. Specifically
+\begin{itemize}
+\item \mcode{options = optimoptions('fmincon','Display','iter')} indicates the iteration history of locating minimum solutions will be displayed;
+\item \mcode{options.SpecifyObjectiveGradient  = true} indicates the gradient provided by the wrapper function \mcode{objfunc} will be used if the optimization algorithm asks for gradient information; and
+\item \mcode{options.SpecifyConstraintGradient = true} indicates the gradient provided by the wrapper function \mcode{nonlincos} will be used if the optimization algorithm asks for gradient information
+\end{itemize}
+
+Once a candidate optimum is located, we may perform data processing and visualization using the wrappers in the following way
+\begin{lstlisting}[language=coco-highlight]
+>> [~,yy]   = opt_read_sol(x, prob, 'vel');
+>> fprintf('Objetive at located optimum: obj=%d\n', yy);
+
+% optimal state trajectory
+>> coll_sol = opt_read_coll_sol(x, prob, '');
+>> figure(1);
+>> plot(coll_sol.tbp, coll_sol.xbp(:,1), 'r-'); hold on
+>> plot(coll_sol.tbp, coll_sol.xbp(:,2), 'b--');
+>> xlabel('$t$', 'interpreter', 'latex');
+>> legend('$x_1(t)$', '$x_2(t)$', 'interpreter', 'latex');
+>> set(gca, 'Fontsize', 14);
+
+>> figure(2)
+>> plot(coll_sol.xbp(:,1), coll_sol.xbp(:,2), 'ko-', 'MarkerSize', 8);
+>> xlabel('$x_1$', 'interpreter', 'latex');
+>> ylabel('$x_2$', 'interpreter', 'latex');
+>> set(gca, 'Fontsize', 14);
+\end{lstlisting}
+
+\begin{exercises}
+\item Compare the results obtained above with the ones from \mcode{coco/coll/examples/linode_optim}, where the latter demonstrates how to use \textsc{coco} to generate the first-order necessary conditions in an object-oriented way~\cite{staged_adjoint} and solve the conditions using parameter continuation.
+\item Modify the code of the \texttt{linode} example to also account for an inequality constraint on stiffness $k$ and repeat the analysis in this section.
+\item Consider the optimization along the solution manifold to a two-point boundary-value problem~\cite{Doedel-ii,staged_adjoint}. Specifically, consider the following objective functional
+\begin{equation*}
+\frac{1}{10}(p_1^2+p_2^2+p_3^2)+\int_0^1 (x_1(t)-1)^2\mathrm{d}t
+\end{equation*}
+subject to constraints
+\begin{equation*}
+\dot{x}_1 = x_2,\, \dot{x}_2 = -p_1\exp(x_1+p_2x_1^2+p_3x_1^4),\, x_1(0) = x_1(1) = 0.
+\end{equation*}
+Implement your code using wrapper functions and compare your results with the ones from \mcode{coco_fmincon/examples/dodel}.
+\end{exercises}
+
+
+
+\section{Optimal control -- \texttt{moon\_lander}}
+\label{sec:moon}
+Consider the optimal control of a soft lunar landing as follows~\cite{darby2011hp}: minimize 
+\begin{equation}
+J=\int_0^{t_f} u\mathrm{d}t
+\end{equation}
+subject to 
+\begin{equation}
+\label{eq:moon-bvp}
+\dot{h}=v,\, \dot{v}=-g+u,\quad h(0)=10,\, v(0)=-2,\, h(t_f)=0,\, v(t_f)=0
+\end{equation}
+and the control \emph{path constraint} $0\leq u\leq 3$. Here $g=1.5$ is the gravity of acceleration and $t_f$ is free.
+
+
+We first construct a solution satisfying the differential equations and boundary conditions in \eqref{eq:moon-bvp}. Parameter continuation will be used to achieve such a goal. Specifically, we assume $u(t)=kt$ and continue in $t_f$ to arrive at $h(t_f)=0$, and then continue in $k$ until $v(t_f)=0$. Such a solution will be used as the initial point for locating minimum.
+
+We proceed to implement the continuation problem using \mcode{coll} toolbox as follows
+\begin{lstlisting}[language=coco-highlight]
+>> t0 = 0;
+>> x0 = [10 -2];
+>> prob = coco_prob();
+>> prob = coco_set(prob, 'cont', 'h_max', 100);
+>> prob = coco_set(prob, 'ode', 'autonomous', false);
+>> prob = ode_isol2coll(prob, '', @lander0, t0, x0, 'k', 0);
+>> data = coco_get_func_data(prob, 'coll', 'data'); % Extract function data
+>> maps = data.coll_seg.maps;
+>> prob = coco_add_pars(prob, 'pars', ...
+  		[maps.x0_idx; maps.x1_idx; maps.T0_idx; maps.T_idx], ...
+  		{'x1s' 'x2s' 'x1e' 'x2e' 'T0' 'T'});
+\end{lstlisting}
+Here \mcode{lander0} defines the vector field with given control input $u(t)=kt$. It is encoded as follows
+\begin{lstlisting}[language=coco-highlight]
+function y = lander0(t,x,p)
+
+y = [x(2,:); -1.5+t.*p(1,:)];
+
+end
+\end{lstlisting}
+We then continue in $t_f$ until $h(t_f)=0$
+\begin{lstlisting}[language=coco-highlight]
+>> cont_args = {1, {'x1e' 'T' 'x2e'}, {[0 20],[0, 100]}};
+>> bd = coco(prob, 'coll1', [], cont_args{:});
+\end{lstlisting}
+
+We restart continuation from the solution with $h(t_f)=0$ and continue in $k$ until $v(t_f)=0$, as shown in the following commands.
+\begin{lstlisting}[language=coco-highlight]
+>> labs = coco_bd_labs(bd, 'EP');
+>> prob = coco_prob();
+>> prob = coco_set(prob, 'cont', 'h_max', 100);
+>> prob = ode_coll2coll(prob, '', 'coll1', max(labs));
+>> data = coco_get_func_data(prob, 'coll', 'data');
+>> maps = data.coll_seg.maps;
+>> prob = coco_add_pars(prob, 'pars', ...
+        [maps.x0_idx; maps.x1_idx; maps.T0_idx; maps.T_idx], ...
+        {'x1s' 'x2s' 'x1e' 'x2e' 'T0' 'T'});
+>> cont_args = {1, {'x2e' 'k' 'T'}, {[-6 0],[-100, 10]}};
+>> bd = coco(prob, 'coll2', [], cont_args{:});
+\end{lstlisting}
+
+Next we construct the optimization problem using the obtained initial solution. We use \mcode{dae} toolbox to encode the state equations and path constraints. Specifically, we use \mcode{ddae_isol2coll} toolbox constructor to encode the state equations and \mcode{alg_dae_isol2seg} to encode the path constraints, as shown in the following commands.
+\begin{lstlisting}[language=coco-highlight]
+>> labs = coco_bd_labs(bd, 'EP');
+>> sol  = coll_read_solution('', 'coll2', max(labs));
+>> t0   = sol.tbp;
+>> x0   = sol.xbp;
+>> y0   = sol.p*sol.tbp;
+>> prob = coco_prob();
+>> prob = coco_set(prob, 'ddaecoll', 'NTST', 20);
+>> prob = coco_set(prob,'ddaecoll','Apoints','Gauss');
+>> prob = ddaecoll_isol2seg(prob, '', @lander, t0, x0, y0, []); 
+>> prob = alg_dae_isol2seg(prob, 'g1', '', @g1func, 'inequality'); % -u<=0
+>> prob = alg_dae_isol2seg(prob, 'g2', '', @g2func, 'inequality'); % u<=3
+\end{lstlisting}
+Here \mcode{lander} denotes the vector field with control input, \mcode{g1func} and \mcode{g2func} represents the two path constraints. They are encoded as follows
+\begin{lstlisting}[language=coco-highlight]
+function y = lander(t,x,y,p)
+
+y = [x(2,:); -1.5+y(1,:)];
+
+end
+\end{lstlisting}
+\begin{lstlisting}[language=coco-highlight]
+function f = g1func(t,x,y,p)
+
+f = -y;
+
+end
+\end{lstlisting}
+\begin{lstlisting}[language=coco-highlight]
+function f = g2func(t,x,y,p)
+
+f = y-3;
+
+end
+\end{lstlisting}
+We proceed to append the boundary conditions as follows
+\begin{lstlisting}[language=coco-highlight]
+>> [data, uidx] = coco_get_func_data(prob, 'ddaecoll', 'data', 'uidx');
+>> bc_funcs = {@lander_bc, @lander_bc_du};
+>> prob = coco_add_func(prob, 'bc', bc_funcs{:}, [], 'zero', 'uidx', ...
+        uidx([data.x0_idx; data.x1_idx; data.T0_idx]));
+\end{lstlisting}
+Here \mcode{lander_bc} and \mcode{lander_bc_du} are the encodings of the boundary conditions and its Jacobian, respectively
+\begin{lstlisting}[language=coco-highlight]
+function [data, y] = lander_bc(prob, data, u)
+
+x0 = u(1:2);
+x1 = u(3:4);
+T0 = u(5);
+
+y = [x0(1)-10; x0(2)+2; x1; T0];
+
+end
+\end{lstlisting}
+\begin{lstlisting}[language=coco-highlight]
+function [data, J] = lander_bc_du(prob, data, u)
+
+J = eye(5);
+
+end
+\end{lstlisting}
+We finally append the objective functional to \mcode{prob}
+\begin{lstlisting}[language=coco-highlight]
+>> prob = coco_add_func(prob, 'obj', @int_u, data, 'inactive', 'obj',...
+        'uidx', uidx([data.ybp_idx; data.T_idx]));
+\end{lstlisting}
+Here \mcode{int_u} is the encoding of the integral of control input
+\begin{lstlisting}[language=coco-highlight]
+function [data, y] = int_u(prob, data, u) 
+
+ybp = u(1:end-1);
+T   = u(end);
+ycn = data.Wda*ybp;
+y   = 0.5*T*data.wts1*ycn/data.ddaecoll.NTST;
+
+end
+\end{lstlisting}
+
+Now we can call \mcode{fmincon} to solve the optimization problem as follows
+\begin{lstlisting}[language=coco-highlight]
+>> options = optimoptions('fmincon','Display','iter');  
+>> options.SpecifyObjectiveGradient  = true;
+>> options.SpecifyConstraintGradient = true;
+
+>> u0 = prob.efunc.x0;
+>> fprintf('Optimization algorithm: interior-point (default)\n');
+>> x = fmincon(@(u) objfunc(u,prob,'obj'), u0,[],[],[],[],[],[],...
+    		@(u) nonlincons(u,prob),options);
+\end{lstlisting}
+
+Once a candidate optimum is located, we can plot the time-history of states and control input using wrapper functions as follows
+\begin{lstlisting}[language=coco-highlight]
+>> sol = opt_read_ddaecoll_sol(x, prob, '');
+>> figure(1)
+>> plot(sol.tbpd, sol.xbp(:,1), 'r-'); hold on
+>> plot(sol.tbpd, sol.xbp(:,2), 'b--');
+>> xlabel('$t$', 'interpreter', 'latex');
+>> legend('$x_1(t)$', '$x_2(t)$', 'interpreter', 'latex');
+>> set(gca, 'Fontsize', 14);
+
+>> figure(2)
+>> plot(sol.tbpa, sol.ybp, 'ro');
+>> xlabel('$t$', 'interpreter', 'latex');
+>> ylabel('$u(t)$', 'interpreter', 'latex');
+>> set(gca, 'Fontsize', 14);
+\end{lstlisting}
+
+\begin{exercises}
+\item \mcode{fmincon} does not require the initial point to satisfy constraints. In this section, we performed continuation to obtain an initial point which satisfies the final state constraint. Consider the case without control and perform forward simulation until $t_f=1$. The obtained solution will violate the final state constraints in general. Taking this solution as initial point and check whether \mcode{fmincon} returns a convergent solution.
+\item In this section, the optimal control is bang-bang. Change the objective functional to $\int_0^{t_f}u^2\mathrm{d}t$ and see how the optimal control changes.
+\end{exercises}
+
+
+
+\section{Discussion}
+The \mcode{coll} toolbox in \textsc{coco} supports adaptive discretization to trajectory segments in parameter continuation. Such adaptivity, however, is not applicable here because the number of design variables and the number of constraints are not allowed to change in the iteration process of \mcode{fmincon}. Instead, once a candidate optimum is located, one may decide to remesh the trajectory appropriately and update the problem structure \mcode{prob}. Then, we can call \mcode{fmincon} again to solve the optimization problem with updated mesh.
+
+
+
+The wrappers developed here can be easily adapted to other nonlinear programming solvers such as SNOPT~\cite{gill2005snopt}. The wrappers essentially transfer constrained optimization of dynamical systems to finite-dimensional optimization problems. It follows that one can call any nonlinear programming solver to solve the discrete optimization problems.
+
+
+
+
+
+
+\bibliographystyle{IEEEtran}
+\bibliography{reference}
+
+
+
+\end{document}
+

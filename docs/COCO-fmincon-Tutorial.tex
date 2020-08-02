@@ -1,0 +1,160 @@
+\documentclass[final,12pt]{article}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{makeidx}
+%\usepackage{showidx}
+\usepackage{multicol}
+\usepackage{crop}
+\usepackage{amsfonts}
+\usepackage{listings}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage{courier}
+\usepackage[T1]{fontenc}
+%\usepackage{stmaryrd}
+\usepackage{subfigure}
+\usepackage{fullpage}
+\usepackage[multiple]{footmisc}
+\usepackage{hyperref}
+
+\usepackage[notref,notcite,color]{showkeys}
+\renewcommand{\showkeyslabelformat}[1]{\footnotesize\ttfamily\upshape~\fbox{#1}}
+\definecolor{labelkey}{rgb}{0.75,0.2,0.05}
+
+\newcommand{\includefig}[2]{\includegraphics[width=#1\textwidth]{#2}}
+\newcommand{\includeffig}[1]{\includegraphics[width=0.95\textwidth]{#1}}
+\newcommand{\includehfig}[1]{\includegraphics[width=0.46\textwidth]{#1}}
+\newcommand{\includetfig}[1]{\includegraphics[width=0.31\textwidth]{#1}}
+\newcommand{\includefsvg}[1]{\def\svgwidth{0.95\textwidth}\input{#1}}
+\newcommand{\includehsvg}[1]{\def\svgwidth{0.46\textwidth}\input{#1}}
+\newcommand{\includetsvg}[1]{\def\svgwidth{0.31\textwidth}\input{#1}}
+\graphicspath{{figures/}}
+\newcommand{\fns}[1]{\footnotesize{#1}}
+\newcommand{\scrs}[1]{{\scriptstyle{#1}}}
+
+\newcommand{\hiddenB}{white}
+\newcommand{\hiddenA}{green}
+
+\definecolor{grey1}{rgb}{0.0,0.0,0.0}
+\definecolor{grey2}{rgb}{0.2,0.2,0.2}
+\definecolor{grey3}{rgb}{0.4,0.4,0.4}
+\definecolor{grey4}{rgb}{0.5,0.5,0.5}
+
+
+% font and color settings for font highlighting
+\lstdefinestyle{highlight-fonts}{
+	basicstyle=\ttfamily\mdseries\footnotesize,
+	commentstyle=\ttfamily\mdseries\itshape\footnotesize,
+	moredelim=[l][\color{\hiddenA}\ttfamily\mdseries\itshape\footnotesize]{\%\#},
+	moredelim=[l][\color{\hiddenB}\ttfamily\mdseries\itshape\footnotesize]{\%!},
+	keywordstyle=\ttfamily\mdseries\footnotesize,
+	keywordstyle={[2]\ttfamily\bfseries\footnotesize},
+}
+
+% font and color settings for combined font and color highlighting
+\lstdefinestyle{highlight-colors}{
+	basicstyle=\color{grey1}\ttfamily\mdseries\footnotesize,
+	commentstyle=\color{grey2}\ttfamily\mdseries\itshape\footnotesize,
+	moredelim=[l][\color{\hiddenA}\ttfamily\mdseries\itshape\footnotesize]{\%\#},
+	moredelim=[l][\color{\hiddenB}\ttfamily\mdseries\itshape\footnotesize]{\%!},
+	keywordstyle=\color{grey2}\ttfamily\mdseries\footnotesize,
+	keywordstyle={[2]\color{grey2}\ttfamily\bfseries\footnotesize},
+}
+
+\lstdefinestyle{gobble1}{
+	xleftmargin=0.3em,
+}
+
+\lstdefinestyle{gobble2}{
+	xleftmargin=-0.9em,
+}
+
+\lstdefinestyle{gobble3}{
+	xleftmargin=-2.1em,
+}
+
+% import language Matlab and adjust to verbatim typesetting
+\lstdefinelanguage{coco}[]{Matlab}{
+	%literate={~}{{\textasciitilde}}{1},
+	keywords={},
+	morekeywords={},
+	morekeywords=[2]{classdef,properties,private,protected,public,%
+Access,Static,methods,if,function,end,for,while,else,elseif,switch,%
+case,otherwise,do,repeat,until},
+	otherkeywords={{,end},:end,(end,end),\{end,end\},[end,end],/private,private/},
+	%morestring=[b]',
+	morecomment=[l]{},
+	basicstyle=\ttfamily\mdseries\footnotesize,
+	commentstyle=\ttfamily\mdseries\footnotesize,
+	moredelim=[l][\color{\hiddenA}\ttfamily\mdseries\footnotesize]{\%\#},
+	moredelim=[l][\color{\hiddenB}\ttfamily\mdseries\footnotesize]{\%!},
+	keywordstyle=\ttfamily\mdseries\footnotesize,
+	keywordstyle={[2]\ttfamily\mdseries\footnotesize},
+	numbers=none,
+	numberstyle=\scriptsize,
+	numbersep=1em,
+	breaklines=false,
+	breakatwhitespace=true,
+	breakindent=2.5em,
+	showlines=false,
+	lineskip=-0.2ex,
+	frame=none,
+	fontadjust=true,
+	columns=[c]fixed,
+	basewidth={0.575em,0.45em},
+	fontadjust=true,
+	keepspaces=true,
+	tabsize=3,
+	showstringspaces=false,
+	aboveskip=1.5\medskipamount,
+	belowskip=1.5\medskipamount,
+	xleftmargin=0.925em,
+	xrightmargin=0em,
+	rangeprefix={\%!},
+	includerangemarker=false,
+	belowcaptionskip=\bigskipamount
+}
+
+% define language with font highlighting
+\lstdefinelanguage{coco-highlight-fonts}[]{coco}{
+	style=highlight-fonts,
+}
+
+% define language with combined font and color highlighting
+\lstdefinelanguage{coco-highlight-colors}[]{coco}{
+	style=highlight-colors,
+}
+
+% use only one language for highlighting
+\lstdefinelanguage{coco-highlight}[]{coco-highlight-colors}{}
+
+\newcommand{\mcode}[1]{{\lstinline[language=coco-highlight,basewidth={0.6em,0.45em}]|#1|}}
+\newcommand{\mcodes}[1]{{\lstinline[language=Matlab]|#1|}}
+
+%\newcommand{\matlab}[1]{/Users/harrydankowicz/Documents/coco/tests/Tutorial/#1}
+\newcommand{\matlab}[1]{./code/#1}
+
+\newenvironment{exercises}{\noindent\rule[6pt]{\textwidth}{1pt}%
+\vspace{-0.3cm}\subsubsection*{Exercises}\begin{enumerate}}{\end{enumerate}%
+\rule[6pt]{\textwidth}{1pt}}
+
+\setcounter{tocdepth}{1}
+
+\begin{document}
+\lstset{language=coco}
+
+\title{Coupling COCO with fmincon for constrained optimization of dynamical systems}
+
+\author{Mingwu Li, Harry Dankowicz\\ Department of Mechanical Science and Engineering\\ University of Illinois at Urbana-Champaign}
+
+\maketitle
+
+\tableofcontents
+\newpage
+\input{coco-fmincon}
+
+
+
+\end{document}
