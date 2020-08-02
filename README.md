@@ -14,7 +14,7 @@ The necessary conditions are often given in the form of bvps, which can be solve
 **fmincon** is a MATLAB function for finding the minimum of *finite-dimensional* constrained optimization problem. It is a nonlinear programming solver. More details about **fmincon** can be found at MATLAB documentation [5]. Note that **fmincon** can not be used directly to solve *infinite-dimensional* constrained optimization problems, e.g., trajectory optimization and optimal control problems.
 
 ## Wrapper functions
-An optimization problem includes objective function(al), dimensional equality constraints, and inequality constraints. The *zero* functions in COCO can be used to represent equality constraints and *inequality* functions can be used for inequality constraints. As for objective function(al), one can use a *monitor* function to represent it. 
+An optimization problem includes objective function(al), equality constraints, and inequality constraints. The *zero* functions in COCO can be used to represent equality constraints and *inequality* functions can be used for inequality constraints. As for objective function(al), one can use a *monitor* function to represent it. 
 
 Based on these observations, we write wrapper functions for **fmincon**. Given a problem constructed using COCO, all zero/inequality functions are interpreted as equality/inequality constraints, and a monitor function with an identifier is used to define the objective.
 
